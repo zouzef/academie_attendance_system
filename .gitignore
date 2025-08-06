@@ -114,7 +114,7 @@ venv.bak/
 *.local
 
 # Ignore version control script if needed
-/main_progrmme/version_control.py
+admin_folder/
 
 # Ignore OS files
 .DS_Store
