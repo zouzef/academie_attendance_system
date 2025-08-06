@@ -9,7 +9,7 @@ from packaging import version
 GITHUB_REPO = "zouzef/academie_attendance_system"
 LOCAL_VERSION_FILE = "version.json"  # Path to local version.json
 DOWNLOAD_DIR = "latest_update"
-EXCLUDE = ["update_checker.py", DOWNLOAD_DIR]  # Files/folders NOT to delete
+EXCLUDE = ["update_checker.py", DOWNLOAD_DIR]  # Files/folders NOT to delete#yousef test
 
 def get_remote_version():
     url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version.json"

@@ -1,5 +1,5 @@
 {
-    "version": "1.1.4",
+    "version": "1.1.5",
     "stable": true,
-    "changelog": "fix check_version file"
+    "changelog": "testing"
 }
