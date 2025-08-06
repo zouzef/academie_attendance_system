@@ -9,7 +9,7 @@ from packaging import version
 GITHUB_REPO = "zouzef/academie_attendance_system"
 LOCAL_VERSION_FILE = "version.json"  # Path to local version.json
 DOWNLOAD_DIR = "latest_update"
-EXCLUDE = ["update_checker.py"]  # Don’t delete this updater if in the same folder
+EXCLUDE = ["update_checker.py", DOWNLOAD_DIR]  # Files/folders NOT to delete
 
 def get_remote_version():
     url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version.json"
@@ -34,12 +34,16 @@ def download_latest_zip():
     zip_path = os.path.join(DOWNLOAD_DIR, "latest.zip")
 
     print("⬇️ Downloading latest version...")
-    response = requests.get(url, stream=True)
-    with open(zip_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            f.write(chunk)
-    print("✅ Download complete.")
-    return zip_path
+    try:
+        response = requests.get(url, stream=True)
+        with open(zip_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print("✅ Download complete.")
+        return zip_path
+    except Exception as e:
+        print("❌ Download failed:", e)
+        return None
 
 def extract_zip(zip_path):
     print("📦 Extracting new version...")
@@ -50,23 +54,29 @@ def extract_zip(zip_path):
 def delete_old_files():
     print("🧹 Removing old version files...")
     for item in os.listdir("."):
-        if item in EXCLUDE or item == DOWNLOAD_DIR:
+        if item in EXCLUDE:
             continue
-        if os.path.isdir(item):
-            shutil.rmtree(item)
-        else:
-            os.remove(item)
+        try:
+            if os.path.isdir(item):
+                shutil.rmtree(item)
+            else:
+                os.remove(item)
+        except Exception as e:
+            print(f"❌ Failed to delete {item}: {e}")
     print("✅ Old files removed.")
 
 def replace_with_new_version():
     extracted_folder = os.path.join(DOWNLOAD_DIR, f"{GITHUB_REPO.split('/')[1]}-main")
     for item in os.listdir(extracted_folder):
-        s = os.path.join(extracted_folder, item)
-        d = os.path.join(".", item)
-        if os.path.isdir(s):
-            shutil.copytree(s, d, dirs_exist_ok=True)
-        else:
-            shutil.copy2(s, d)
+        src = os.path.join(extracted_folder, item)
+        dest = os.path.join(".", item)
+        try:
+            if os.path.isdir(src):
+                shutil.copytree(src, dest, dirs_exist_ok=True)
+            else:
+                shutil.copy2(src, dest)
+        except Exception as e:
+            print(f"❌ Failed to copy {item}: {e}")
     print("🚀 Updated to new version.")
 
 def main():
@@ -89,10 +99,11 @@ def main():
     if remote_ver > local_ver:
         print(f"⬆️ New version available: {remote_ver} (current: {local_ver})")
         zip_path = download_latest_zip()
-        extract_zip(zip_path)
-        delete_old_files()
-        replace_with_new_version()
-        print("✅ Update complete. Restart the app.")
+        if zip_path:
+            extract_zip(zip_path)
+            delete_old_files()
+            replace_with_new_version()
+            print("✅ Update complete. Please restart the application.")
     else:
         print("✅ Already up to date.")
 
