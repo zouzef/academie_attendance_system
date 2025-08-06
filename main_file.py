@@ -155,7 +155,7 @@ def main():
                 print("❌ Error:", e)
                 break
     else:
-        logger.error(f"❌ Error Server: {e}")
+        logger.error(f"❌ Error connextion to server ")
         status="down"
         requests.post(
             "https://127.0.0.1:5000/api/server-report",
