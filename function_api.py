@@ -1,133 +1,91 @@
-import requests
 from logging_prog import logger
-payload = {
-    "username": "cc:28:aa:86:53:97",
-    "password": "e6cae0c2392f5bf3d609c9abe7e1589c8860b4375b8e775cf62046dc09bb29d7",
-}
 
-
-
-API_URL = "https://www.unistudious.com/api_slc/login_check"
-CALENDAR_URL = "https://www.unistudious.com/slc/get-all-calendar"
-
-
-
-def login_as_slc():
-
-
+# ============================
+# GET ALL CALENDARS
+# ============================
+def get_all_calendars(api):
+    """Fetch all calendar entries."""
     try:
-
-        response = requests.post(API_URL, json=payload)
-
-        print(" Server Response Code:", response.status_code)
-        token2 = response.json().get("token")
-        print(token2)
-        if token2 is not None:
-            return token2
+        resp = api.request("GET", "/slc/get-all-calendar", verify=False)
+        resp.raise_for_status()
+        return resp.json()
     except Exception as e:
-        logger.error(f"❌ Error in login_as_slc: {str(e)}")
-        return None,e
+        logger.error(f"❌ Error in get_all_calendars: {e}")
+        return {}
 
-
-# Function to get all the students of the session
-def get_list_students(l, token):
+# ============================
+# GET STUDENTS OF A SESSION
+# ============================
+def get_list_students(api, session):
+    """Fetch student attendance list for a given session."""
     try:
-        list_students_session = []
-        calendar_id = l['id']
-        url = f"https://www.unistudious.com/slc/get-attendance/{calendar_id}"
-        headers = {
-            "Authorization": f"Bearer {token}"
-        }
+        url = f"/slc/get-attendance/{session['id']}"
+        resp = api.request("POST", url, verify=False)
+        resp.raise_for_status()
+        data = resp.json()
 
-        response = requests.post(url, headers=headers)
-        response.raise_for_status()
-
-        # ✅ Convert response to JSON
-        data = response.json()
-
-        # ✅ Extract student attendance
+        students = []
         if 'attendance' in data:
             for j in data['attendance']:
-                student = {
+                students.append({
                     'id': j.get('id'),
                     'userName': j.get('userName'),
                     'userId': j.get('userId'),
                     'userRefRlc': j.get('userRefRlc'),
                     'isPresent': j.get('isPresent')
-                }
-                list_students_session.append(student)
-
-
+                })
         else:
-            logger.info("❌ 'attendance' key not found in response:", data)
-
-
-        return list_students_session
+            logger.warning(f"⚠️ 'attendance' not found in response: {data}")
+        return students
 
     except Exception as e:
-        logger.error(f"❌ Error in login_as_slc: {str(e)}")
+        logger.error(f"❌ Error in get_list_students: {e}")
+        return []
 
-
-
-
-
-
-
-
-def list_students_wid(id_attendance, token):
-    list_students_session = []
-    url = f"https://www.unistudious.com/slc/get-attendance/{id_attendance}"
-    headers = {
-        "Authorization": f"Bearer {token}"
-    }
+# ============================
+# GET STUDENTS BY ATTENDANCE ID
+# ============================
+def list_students_wid(api, id_attendance):
+    """Fetch students for a given attendance ID."""
     try:
-        response = requests.post(url, headers=headers)
-        response.raise_for_status()
+        url = f"/slc/get-attendance/{id_attendance}"
+        resp = api.request("POST", url, verify=False)
+        resp.raise_for_status()
+        data = resp.json()
 
-        # ✅ Convert response to JSON
-        data = response.json()
-
-        # ✅ Extract student attendance
+        students = []
         if 'attendance' in data:
             for j in data['attendance']:
-                student = {
+                students.append({
                     'id': j.get('id'),
                     'userName': j.get('userName'),
                     'userId': j.get('userId'),
                     'userRefRlc': j.get('userRefRlc'),
                     'isPresent': j.get('isPresent')
-                }
-                list_students_session.append(student)
-
-
+                })
         else:
-            logger.info("❌ 'attendance' key not found in response:", data)
+            logger.warning(f"⚠️ 'attendance' not found in response: {data}")
+        return students
 
-
-        return list_students_session
     except Exception as e:
-        logger.error(f"❌ Error in login_as_slc: {str(e)}")
+        logger.error(f"❌ Error in list_students_wid: {e}")
+        return []
 
-
-
-
-def get_all_camera(token: str, room_id: int):
+# ============================
+# GET CAMERAS IN A ROOM
+# ============================
+def get_all_camera(api, room_id: int):
+    """Fetch all cameras in a specific room."""
     try:
-        url = f"https://www.unistudious.com/slc/get-all-camera-room/{room_id}"
-        headers = {
-            "Authorization": f"Bearer {token}"
-        }
-
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-
-        data = response.json()
+        url = f"/slc/get-all-camera-room/{room_id}"
+        resp = api.request("GET", url, verify=False)
+        resp.raise_for_status()
+        data = resp.json()
 
         cameras = []
-
-        if isinstance(data, list):  # if the response is a list of camera dicts
+        if isinstance(data, list):
             for cam in data:
-                camera = {
+                cameras.append({
                     "id": cam.get("id"),
                     "name": cam.get("name"),
                     "mac": cam.get("mac"),
@@ -137,29 +95,11 @@ def get_all_camera(token: str, room_id: int):
                     "roomId": cam.get("roomId"),
                     "roomName": cam.get("roomName"),
                     "created_at": cam.get("created_at")
-                }
-                cameras.append(camera)
+                })
         else:
-            logger.info(f"Unexpected format from camera API: {data}")
-
-
+            logger.warning(f"⚠️ Unexpected camera API format: {data}")
         return cameras
 
     except Exception as e:
-        logger.error(f"❌ Error in login_as_slc: {str(e)}")
-
-
-
-def get_all_calendars(token: str):
-
-    try:
-        headers = {
-            "Authorization": f"Bearer {token}"
-        }
-        response = requests.get(CALENDAR_URL, headers=headers)
-        response.raise_for_status()
-        return response.json()
-
-    except Exception as e:
-        logger.error(f"❌ Error in get_all_calendars: {str(e)}")
-
+        logger.error(f"❌ Error in get_all_camera: {e}")
+        return []
