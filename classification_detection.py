@@ -8,14 +8,14 @@ from change_status import *
 COMPRE_FACE_URL = "http://localhost:8000"  # Adjust if needed
 THRESHOLD = 0.90  # Similarity threshold
 
-API_KEY = "6251a868-7a9e-4fd3-996f-02ffa4210636"
+API_KEY = "7488544f-e3e0-43ab-a4f1-a86eb01eba2d"
 
 
 
-def recognition_job(session_id, token2=None, students=None):
+def recognition_job(session_id, token, students=None):
     print(f"🧠 Launching recognition via CompreFace for session {session_id}")
-
-    base_session_dir = f"/home/kernelsipc/PycharmProjects/academie_attendance/main_progrmme/dataset/session_{session_id}"
+    print(token)
+    base_session_dir = f"./dataset/session_{session_id}"
     session_folder = os.path.join(base_session_dir, "face_crops")
     unknown_dir = None  # Initialize unknown_dir to prevent UnboundLocalError
 
@@ -44,7 +44,7 @@ def recognition_job(session_id, token2=None, students=None):
                 headers=headers,
                 files=files
             )
-        list_name=[]
+
         if response.status_code == 200:
 
             result = response.json()
@@ -57,7 +57,7 @@ def recognition_job(session_id, token2=None, students=None):
                 print(f"📊 Similarity: {similarity}")
 
                 # Check if subject is already recorded
-                if similarity > 0.90 and subject_name not in [name for name, _ in list_student_detected]:
+                if similarity > 0.979 and subject_name not in [name for name, _ in list_student_detected]:
                     list_student_detected.append((subject_name, similarity))
                     print("✅ Match confirmed!")
                 elif similarity <0.90:
@@ -77,26 +77,26 @@ def recognition_job(session_id, token2=None, students=None):
     print(list_student_detected)
 
     #this function will change the status of the student apsent/present
-    update_all_list_present(list_student_detected,session_id,token2)
+    update_all_list_present(list_student_detected,session_id,token)
 
     #=================================================================#
 
-    #here i will call the function to create a classification of the images of students unkonw
-
+    #classification of the unkown images
     classified_unknown = os.path.join(session_folder, "classified_unknown")
     classify_faces(unknown_dir, classified_unknown)
 
     # Upload each classified person folder to cloud
     print("🚀 Uploading classified unknown persons to cloud...")
-    process_all_person_folders(classified_unknown,token2,session_id)
+    process_all_person_folders(classified_unknown,token,session_id)
 
 
 
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) > 2:
         session_id = sys.argv[1]
-        token2 = sys.argv[2]
-        recognition_job(session_id, token2)
+        token = sys.argv[2]
+        recognition_job(session_id, token)
     else:
-        print("❌ Usage: python functions_detection2.py <session_id> <token2>")
+        print("❌ Usage: python functions_detection2.py <session_id> <token>")

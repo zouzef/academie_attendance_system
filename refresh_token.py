@@ -3,14 +3,20 @@ import time
 import jwt
 import requests
 
+
 class APIClient:
     def __init__(self, base_url):
         self.base_url = base_url
         self.token = None
         self.refresh_token = None
+        self.username = None
+        self.password = None
 
     def login(self, username, password):
         """Login and store tokens."""
+        self.username = username
+        self.password = password
+
         resp = requests.post(
             f"{self.base_url}/api_slc/login_check",
             json={"username": username, "password": password},
@@ -18,7 +24,9 @@ class APIClient:
         )
         resp.raise_for_status()
         data = resp.json()
+
         self.token = data["token"]
+        print(self.token)
         self.refresh_token = data["refresh_token"]
 
     def will_expire_soon(self, seconds=300):
@@ -31,17 +39,11 @@ class APIClient:
             return True
 
     def refresh(self):
-        if not self.refresh_token:
-            raise RuntimeError("No refresh token available")
-        resp = requests.post(
-            f"{self.base_url}/api/auth/refresh",
-            json={"refresh_token": self.refresh_token},
-            verify=False
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        self.token = data["token"]
-        self.refresh_token = data["refresh_token"]
+        """Re-login since refresh endpoints don't exist"""
+        if not self.username or not self.password:
+            raise RuntimeError("No credentials stored for re-login")
+
+        self.login(self.username, self.password)
 
     def request(self, method, endpoint, **kwargs):
         # Auto refresh if needed

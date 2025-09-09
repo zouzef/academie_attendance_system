@@ -87,6 +87,7 @@ def get_all_camera(api, room_id: int):
             for cam in data:
                 cameras.append({
                     "id": cam.get("id"),
+                    "type": cam.get("type"),
                     "name": cam.get("name"),
                     "mac": cam.get("mac"),
                     "username": cam.get("username"),

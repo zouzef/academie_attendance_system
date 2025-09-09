@@ -53,16 +53,19 @@ def process_all_person_folders(classified_unknown, token, session_id):
             if not images:
                 continue
 
+            #take only the first 3 images
+            selected_images = images[:3]
+
+
+            #create the folder with the first image
             first_image_path = os.path.join(person_path, images[0])
-
-
             folder_id = create_cloud_folder(session_id, first_image_path, token)
 
             if not folder_id:
                 print(f"❌ Failed to create folder for {person_folder}")
                 continue
 
-            for image_name in images[1:]:
+            for image_name in selected_images[1:]:
                 image_path = os.path.join(person_path, image_name)
                 upload_image_to_folder(folder_id, image_path, token)
 

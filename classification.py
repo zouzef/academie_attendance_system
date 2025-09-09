@@ -1,3 +1,5 @@
+#change the api keys to get from the dashboard
+
 import os
 import requests
 import shutil
@@ -5,10 +7,10 @@ from logging_prog import *
 
 
 
-def classify_faces(input_dir, output_dir, api_key="b49acd73-1cd6-4d4e-b100-4e64513eab15", base_url="http://localhost:8000"):
+def classify_faces(input_dir, output_dir, api_key="0e9e5b42-78cd-4623-b488-6ee8871e5931", base_url="http://localhost:8000"):
     VERIFY_ENDPOINT = f"{base_url}/api/v1/verification/verify"
     HEADERS = {"x-api-key": api_key}
-    SIMILARITY_THRESHOLD = 0.8  # Adjust if needed
+    SIMILARITY_THRESHOLD = 0.95  # Adjust if needed
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -33,7 +35,7 @@ def classify_faces(input_dir, output_dir, api_key="b49acd73-1cd6-4d4e-b100-4e645
                 return False
 
             similarity = face_matches[0].get("similarity", 0)
-            threshold = result.get("threshold", 0.9)
+            threshold = result.get("threshold", 0.95)
 
             print(f"🔍 Comparing\n   {os.path.basename(source_path)} ↔ {os.path.basename(target_path)}\n   → Similarity: {similarity:.4f} | Threshold: {threshold:.2f}")
 

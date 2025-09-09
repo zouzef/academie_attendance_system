@@ -12,14 +12,14 @@ from refresh_token import APIClient
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BASE_URL = "https://www.unistudious.com"
-USERNAME = "cc:28:aa:86:53:97"# Change to real credentials
-PASSWORD = "e6cae0c2392f5bf3d609c9abe7e1589c8860b4375b8e775cf62046dc09bb29d7"
+USERNAME = "f4:4d:30:ee:c9:1d"  # seconde scl need association
+PASSWORD = "4156ac789eaa0dc23d5cfb570a23f950ea9bcc63877b3a78a6a86604892d2d01"
 
-
-compreface_api_key = "6251a868-7a9e-4fd3-996f-02ffa4210636"
+compreface_api_key = "7488544f-e3e0-43ab-a4f1-a86eb01eba2d"
 compreface_url = "http://localhost:8000"
 
 def main():
+    print("################ Server is working now ################")
     api = APIClient(BASE_URL)
 
     # --- LOGIN ---
@@ -41,7 +41,6 @@ def main():
     started_sessions = []
     active_sessions = []
     rooms_without_cameras = set()  # <-- Keep track of rooms with no cameras
-
 
     while True:
         try:
@@ -91,10 +90,9 @@ def main():
                     # Get students & cameras
                     list_student = get_list_students(api, s)
                     list_camera = get_all_camera(api, s["roomId"])
-
                     # Check if there is at least one camera
-                    if(len(list_camera)>0):
-
+                    if (len(list_camera) > 0):
+                        #download_images(list_student)
                         # Create dataset folders
                         face_crops_dir, full_frames_dir, pkl_dir = create_dataset_folders(s["id"])
                         session_folder = os.path.join("dataset", f"session_{s['id']}")
@@ -105,15 +103,20 @@ def main():
                         os.makedirs(img_known_folder, exist_ok=True)
                         os.chmod(img_known_folder, 0o777)
 
+                        student_image_folder = "student_image"
+                        os.makedirs(student_image_folder, exist_ok=True)  # will create if not exists
+                        os.chmod(student_image_folder, 0o777)
+
+
                         # Download known student images
-                        get_all_img_file(api, list_student, save_dir=img_known_folder)
+                        get_all_img_file(list_student,api.token, save_dir=student_image_folder)
 
                         # Start detection
                         detection_processes = start_detection_for_session(
                             s["id"], s["roomId"], list_student, list_camera
                         )
-
                         started_sessions.append(s["id"])
+
                         active_sessions.append({
                             "session_id": s["id"],
                             "end_time": s["startTime"] + timedelta(minutes=1),
@@ -128,18 +131,16 @@ def main():
             # --- Stop sessions after 15 minutes ---
             now = datetime.now()
             for session in active_sessions[:]:
-                if now >= session["end_time"]:
+                if now >= session["end_time"]+timedelta(minutes=10):
                     print(f" Stopping detection for session {session['session_id']}")
                     for proc_info in session["processes"]:
                         proc_info["stop_event"].set()
                         proc_info["process"].join()
-
                     try:
                         print(f" Running post-treatment for session {session['session_id']}")
-                        run_post_treatment(api, session["session_id"])
+                        run_post_treatment(api.token, session["session_id"])
                     except Exception as treatment_error:
                         print(f" Error in post-treatment for session {session['session_id']}: {treatment_error}")
-
                     active_sessions.remove(session)
 
             # --- Display future sessions ---
@@ -163,9 +164,7 @@ def main():
             )
             break
 
-# ==============================
-# ENTRY POINT
-# ==============================
+
 if __name__ == "__main__":
     import multiprocessing
     multiprocessing.set_start_method("spawn")

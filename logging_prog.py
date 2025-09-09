@@ -1,16 +1,29 @@
 import logging
 import datetime
 import json
-LOG_FILE = "/home/kernelsipc/PycharmProjects/flasktemplate/static/logs.json"
+
 import os
 from datetime import datetime
+
+
+
+LOG_FILE = ("logs.json")
+
 class JsonLogHandler(logging.Handler):
     def __init__(self, filename):
         super().__init__()
         self.filename = filename
-        if not os.path.exists(self.filename):
+        # Create file if missing or empty/invalid
+        if not os.path.exists(self.filename) or os.stat(self.filename).st_size == 0:
             with open(self.filename, "w") as f:
                 json.dump([], f)
+        else:
+            try:
+                with open(self.filename, "r") as f:
+                    json.load(f)
+            except json.JSONDecodeError:
+                with open(self.filename, "w") as f:
+                    json.dump([], f)
 
     def emit(self, record):
         log_entry = {

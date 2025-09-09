@@ -32,7 +32,6 @@ def download_latest_zip():
     url = f"https://github.com/{GITHUB_REPO}/archive/refs/heads/main.zip"
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     zip_path = os.path.join(DOWNLOAD_DIR, "latest.zip")
-
     print("⬇️ Downloading latest version...")
     try:
         response = requests.get(url, stream=True)
@@ -50,6 +49,7 @@ def extract_zip(zip_path):
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(DOWNLOAD_DIR)
     print("✅ Extraction done.")
+
 
 def delete_old_files():
     print("🧹 Removing old version files...")
@@ -79,23 +79,19 @@ def replace_with_new_version():
             print(f"❌ Failed to copy {item}: {e}")
     print("🚀 Updated to new version.")
 
+
 def main():
     print("🔎 Checking for updates...")
-
     remote_data = get_remote_version()
     local_data = get_local_version()
-
     if not remote_data or not local_data:
         print("⚠️ Could not read version data.")
         return
-
     if not remote_data.get("stable", False):
         print("⚠️ Remote version is not marked as stable. Skipping update.")
         return
-
     remote_ver = version.parse(remote_data["version"])
     local_ver = version.parse(local_data["version"])
-
     if remote_ver > local_ver:
         print(f"⬆️ New version available: {remote_ver} (current: {local_ver})")
         zip_path = download_latest_zip()
